@@ -1,0 +1,51 @@
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+}
+
+.react-pdf__Page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.react-pdf__Page .annotationLayer section,
+.react-pdf__Page .annotationLayer input,
+.react-pdf__Page .annotationLayer textarea,
+.react-pdf__Page .annotationLayer select {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.react-pdf__Page .annotationLayer textarea,
+.react-pdf__Page .annotationLayer select,
+.react-pdf__Page .annotationLayer input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  overflow: hidden;
+  line-height: 1.2 !important;
+  padding: 0 !important;
+  vertical-align: middle;
+}
+
+.react-pdf__Page .annotationLayer input[type="checkbox"],
+.react-pdf__Page .annotationLayer input[type="radio"] {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  aspect-ratio: 1 / 1;
+}
