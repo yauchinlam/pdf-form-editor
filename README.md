@@ -76,6 +76,34 @@ The frontend posts PDFs to:
 http://localhost:8000/api/analyze-pdf
 ```
 
+## Backend Deployment
+
+The backend can be deployed to Render as a Docker web service. The included
+`backend/Dockerfile` installs the Python dependencies plus Poppler and
+Tesseract, then starts FastAPI with Render's `PORT` environment variable.
+
+Render setup:
+
+```text
+Service type: Web Service
+Environment: Docker
+Dockerfile path: ./backend/Dockerfile
+Docker build context: .
+Health check path: /api/health
+```
+
+The repo also includes `render.yaml` for Render Blueprint deploys.
+
+After Render creates the backend service, set this GitHub Actions repository
+variable for the GitHub Pages frontend:
+
+```text
+VITE_API_URL=https://YOUR_RENDER_SERVICE.onrender.com/api/analyze-pdf
+```
+
+If the frontend is hosted from another domain, set the backend environment
+variable `FRONTEND_ORIGINS` to a comma-separated list of allowed origins.
+
 ## Development
 
 Run both services at the same time:

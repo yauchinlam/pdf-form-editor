@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import math
+import os
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -21,9 +22,25 @@ from pytesseract import Output
 
 app = FastAPI(title="PDF Form Editor API")
 
+
+def _cors_origins() -> list[str]:
+    configured_origins = os.getenv("FRONTEND_ORIGINS", "")
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://yauchinlam.github.io",
+    ]
+    origins.extend(
+        origin.strip().rstrip("/")
+        for origin in configured_origins.split(",")
+        if origin.strip()
+    )
+    return sorted(set(origins))
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

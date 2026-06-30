@@ -1,0 +1,28 @@
+name: Backend Docker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".dockerignore"
+      - ".github/workflows/backend-docker.yml"
+      - "render.yaml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".dockerignore"
+      - ".github/workflows/backend-docker.yml"
+      - "render.yaml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build --file backend/Dockerfile --tag pdf-form-editor-api:test .

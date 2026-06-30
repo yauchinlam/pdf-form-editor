@@ -24,7 +24,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-const API_URL = "http://localhost:8000/api/analyze-pdf";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/analyze-pdf";
 
 export function PdfWorkspace() {
   const fileInputRef = useRef(null);
@@ -105,7 +105,12 @@ export function PdfWorkspace() {
         setStatus(`Detected ${payload.length} structural ${payload.length === 1 ? "field" : "fields"}.`);
       } catch (analysisError) {
         setDetectedFields([]);
-        setError(analysisError instanceof Error ? analysisError.message : "The PDF could not be analyzed.");
+        const message = analysisError instanceof Error ? analysisError.message : "The PDF could not be analyzed.";
+        setError(
+          message === "Failed to fetch"
+            ? "Upload failed because the analysis API could not be reached. Check the deployed backend URL and CORS settings."
+            : message,
+        );
         setStatus("Analysis failed.");
       } finally {
         setIsAnalyzing(false);
