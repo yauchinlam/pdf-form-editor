@@ -26,6 +26,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/analyze-pdf";
 const ANALYSIS_TIMEOUT_MS = 90_000;
+const HEALTH_TIMEOUT_MS = 15_000;
+const HEALTH_URL = API_URL.replace(/\/api\/analyze-pdf\/?$/, "/api/health");
 
 export function PdfWorkspace() {
   const fileInputRef = useRef(null);
@@ -80,15 +82,21 @@ export function PdfWorkspace() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
+      setStatus("Checking analysis API...");
 
       try {
+        await verifyApiHealth();
+
+        setStatus(`Analyzing ${file.name}...`);
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
+
         const response = await fetch(API_URL, {
           method: "POST",
           body: formData,
           signal: controller.signal,
         });
+        window.clearTimeout(timeoutId);
 
         let payload = null;
         try {
@@ -122,7 +130,6 @@ export function PdfWorkspace() {
         );
         setStatus("Analysis failed.");
       } finally {
-        window.clearTimeout(timeoutId);
         setIsAnalyzing(false);
       }
     },
@@ -253,6 +260,39 @@ export function PdfWorkspace() {
       ) : null}
     </div>
   );
+}
+
+async function verifyApiHealth() {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(HEALTH_URL, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Analysis API health check failed with HTTP ${response.status}.`);
+    }
+
+    const payload = await response.json();
+    if (payload?.status !== "ok") {
+      throw new Error("Analysis API health check returned an unexpected response.");
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Analysis API health check timed out after 15 seconds.");
+    }
+
+    if (error instanceof TypeError) {
+      throw new Error("Analysis API health check failed. The backend may be unreachable or blocked by CORS.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 function UploadTarget({ disabled, onFile }) {
