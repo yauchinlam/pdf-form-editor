@@ -25,6 +25,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/analyze-pdf";
+const ANALYSIS_TIMEOUT_MS = 90_000;
 
 export function PdfWorkspace() {
   const fileInputRef = useRef(null);
@@ -79,10 +80,14 @@ export function PdfWorkspace() {
       const formData = new FormData();
       formData.append("file", file);
 
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
+
       try {
         const response = await fetch(API_URL, {
           method: "POST",
           body: formData,
+          signal: controller.signal,
         });
 
         let payload = null;
@@ -109,18 +114,20 @@ export function PdfWorkspace() {
         setDetectedFields([]);
         const message = analysisError instanceof Error ? analysisError.message : "The PDF could not be analyzed.";
         setError(
-          message === "Failed to fetch"
-            ? "Upload failed because the analysis API could not be reached. Check the deployed backend URL and CORS settings."
-            : message,
+          analysisError instanceof DOMException && analysisError.name === "AbortError"
+            ? "Analysis timed out after 90 seconds. The backend may still be starting up or the PDF may be too complex."
+            : message === "Failed to fetch"
+              ? "Upload failed because the analysis API could not be reached. Check the deployed backend URL and CORS settings."
+              : message,
         );
         setStatus("Analysis failed.");
       } finally {
+        window.clearTimeout(timeoutId);
         setIsAnalyzing(false);
       }
     },
     [pdfUrl],
   );
-
   const updateField = useCallback((fieldId, updates) => {
     setDetectedFields((currentFields) =>
       currentFields.map((field) => (field.field_id === fieldId ? { ...field, ...updates } : field)),
