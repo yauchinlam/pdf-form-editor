@@ -71,10 +71,10 @@ export function PdfWorkspace() {
       setDetectedFields([]);
       setPageCount(0);
       setActiveMenu(null);
-      setPdfFile(file);
+      setPdfFile(null);
 
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-      setPdfUrl(URL.createObjectURL(file));
+      setPdfUrl("");
 
       const formData = new FormData();
       formData.append("file", file);
@@ -101,6 +101,8 @@ export function PdfWorkspace() {
           throw new Error("The analysis service returned an unexpected response.");
         }
 
+        setPdfFile(file);
+        setPdfUrl(URL.createObjectURL(file));
         setDetectedFields(payload.map(normalizeDetectedField));
         setStatus(`Detected ${payload.length} structural ${payload.length === 1 ? "field" : "fields"}.`);
       } catch (analysisError) {
